@@ -38,9 +38,12 @@ venue_df_p1 <- data.frame(fromJSON(venue_content, flatten = TRUE)[["_embedded"]]
 venue_json <- fromJSON(venue_content, flatten = TRUE)
 
 n <- as.numeric(venue_json[[3]][["totalElements"]])
-maxpage <- as.numeric(venue_json[[3]][["totalPages"]])
-size <- as.numeric(venue_json[[3]][["size"]])
 
+# Set size to the maximum size of 200
+size = 200
+
+# Compute maximum number of pages
+maxpage <- floor(n/size)
 
 # Number of entries on the last incomplete page:
 remainder <- n-size*floor(n/size)
@@ -52,8 +55,8 @@ venue_data <- data.frame(
   postalCode = character(n),
   address   = character(n),
   url = character(n),
-  longitude = double(n),
-  latitude = double(n),
+  longitude = character(n),
+  latitude = character(n),
   stringsAsFactors = FALSE)
 
 
@@ -64,45 +67,62 @@ for (i in 1:maxpage) {
                                 countryCode = "DE", 
                                 locale = "*",
                                 # start at page 0 as current page number counted from 0
-                                page   = i-1))
+                                page   = i-1,
+                                size = 200))
   
   venue_content <- content(res_venue, as = "text", encoding = "UTF-8")
   
-  venue_data[(size * i - (size-1)):(size * i),] <- data.frame(fromJSON(venue_content, flatten = TRUE)[[1]][[1]]) %>%
+  # parse content to json 
+  venue_json <- fromJSON(venue_content, flatten = TRUE)[[1]][[1]]
+  
+  # Replace column by "NA" if it does not exists on each page
+  venue_json$name[is.null(venue_json$name)] <- NA
+  venue_json$city.name[is.null(venue_json$city.name)] <- NA
+  venue_json$postalCode[is.null(venue_json$postalCode)] <- NA
+  venue_json$address.line1[is.null(venue_json$address.line1)] <- NA
+  venue_json$url[is.null(venue_json$url)] <- NA
+  venue_json$location.longitude[is.null(venue_json$location.longitude)] <- NA
+  venue_json$location.latitude[is.null(venue_json$location.latitude)] <- NA
+  
+  
+  #venue_data[(size * i - (size-1)):(size * i),] <- data.frame(fromJSON(venue_content, flatten = TRUE)[[1]][[1]]) %>%
+  
+  venue_data[(size * i - (size-1)):(size * i),] <- data.frame(venue_json) %>%
     #select colums
-    select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
+    select('name', 'city.name', 'postalCode', 'address.line1', 'url', 'location.longitude', 'location.latitude')
   
   # pause in loop
   Sys.sleep(0.5)
 }
-# loop stopped at i=15
+
 
 
 # Ex. 5
 
-# create subset of first observations to plot a map 
-plot_data <- venue_data[1:280,]
-
-# create numeric longitude and latitude
-sapply(map_data, class)
+# Put coordinates into the correct class
+sapply(plot_data, class)
 plot_data[c("longitude", "latitude")] <- sapply(plot_data[c("longitude", "latitude")],as.numeric)
 
 # drop rows with coordinates outside the given range
-plot_data[which(plot_data$longitude %in% 5.866944:15.043611) & (plot_data$latitude %in% 47.271679:55.0846),]
-
+plot_data <-
+  subset(plot_data, latitude > 47.271679 & latitude < 55.0846)
+plot_data <-
+  subset(plot_data, longitude > 5.866944 & longitude < 15.043611)
 # plot venues in a map of Germany
+
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
     data = map_data("world", region = "Germany"),
     fill = "grey90",color = "black") +
+  theme_void() + 
+  coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))+
   geom_point(aes(x = longitude, y = latitude),
              data = plot_data,
              color = "red",
              alpha = 1,
              size = 1,
              shape = 18)
-  theme_void() +
-  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
-  theme(title = element_text(size=8, face='bold'),
-        plot.caption = element_text(face = "italic"))
