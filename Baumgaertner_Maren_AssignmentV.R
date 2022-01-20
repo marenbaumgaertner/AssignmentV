@@ -144,7 +144,7 @@ ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
     data = map_data("world", region = "Germany"),
-    fill = "grey90",color = "black") +
+    fill = "#F9CCC3",color = "black",size = 0.1) +
   theme_void() + 
   coord_quickmap() +
   labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
@@ -152,7 +152,7 @@ ggplot() +
         plot.caption = element_text(face = "italic"))+
   geom_point(aes(x = longitude, y = latitude),
              data = plot_data,
-             color = "red",
+             color = "#F32167",
              alpha = 1,
              size = 1,
              shape = 18)
@@ -320,7 +320,7 @@ ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
     data = map_data("world", region = "Luxembourg"),
-    fill = "grey90",color = "black") +
+    fill = "#F9CCC3",color = "black",size = 0.1) +
   theme_void() + 
   coord_quickmap() +
   labs(title = "Event locations across Luxembourg", caption = "Source: ticketmaster.com") +
@@ -328,7 +328,7 @@ ggplot() +
         plot.caption = element_text(face = "italic"))+
   geom_point(aes(x = longitude, y = latitude),
              data = plot_data,
-             color = "red",
+             color = "#F32167",
              alpha = 1,
              size = 1,
              shape = 18)

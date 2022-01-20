@@ -41,3 +41,8 @@ vignettes/*.pdf
 # API Key
 /apikey.R
 
+# Markdown file
+/Baumgaertner_Maren_AssignmentV.Rmd
+/Baumgaertner_Maren_AssignmentV.html
+
+
