@@ -16,10 +16,15 @@ library(jsonlite);library(httr);library(rlist);library(tidyverse);library(naniar
 # set access to apikey
 source("apikey.R")
 
+# Set country specific information
+code = "DE"
+country = "Germany"
+coordinates <- matrix(c(47.271679, 55.0846, 5.866944, 15.043611), byrow = TRUE, nrow = 2)
+
 # get api response
 venue_res <- GET(url = 'https://app.ticketmaster.com/discovery/v2/venues?',
                  query = list(apikey = key,
-                              countryCode = "DE",
+                              countryCode = code,
                               locale = "*")) 
 status_code(venue_res)
 
@@ -30,7 +35,7 @@ venue_content <- content(venue_res, as = "text", encoding = "UTF-8")
 venue_df_p1 <- data.frame(fromJSON(venue_content, flatten = TRUE)[["_embedded"]][["venues"]]) %>%
   # select colums
   select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
-tibble(venue_df_p1)
+glimpse(venue_df_p1)
 
 # Ex 4
 
@@ -64,7 +69,7 @@ venue_data <- data.frame(
 for (i in 1:(maxpage)) {
   res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                    query = list(apikey = key,
-                                countryCode = "DE", 
+                                countryCode = code, 
                                 locale = "*",
                                 # start at page 0 as current page number counted from 0
                                 page   = i-1,
@@ -97,7 +102,7 @@ for (i in 1:(maxpage)) {
 # Last Page
 res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                  query = list(apikey = key,
-                              countryCode = "DE", 
+                              countryCode = code, 
                               locale = "*",
                               # start at page 0 as current page number counted from 0
                               page   = i,
@@ -122,7 +127,7 @@ last_page <- data.frame(venue_json) %>%
   select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
 
 venue_data[(size * (i+1) - (size-1)):n,] <- last_page
-#sum(duplicated(venue_data$names,))
+sum(duplicated(venue_data$name))
 
 # Ex. 5
 
@@ -135,19 +140,19 @@ plot_data[c("longitude", "latitude")] <- sapply(plot_data[c("longitude", "latitu
 
 # drop rows with coordinates outside the given range
 plot_data <-
-  subset(plot_data, latitude > 47.271679 & latitude < 55.0846)
+  subset(plot_data, latitude > coordinates[1,1] & latitude < coordinates[1,2])
 plot_data <-
-  subset(plot_data, longitude > 5.866944 & longitude < 15.043611)
+  subset(plot_data, longitude > coordinates[2,1] & longitude < coordinates[2,2])
 # plot venues in a map of Germany
-
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
-    data = map_data("world", region = "Germany"),
+    data = map_data("world", region = country),
     fill = "#F9CCC3",color = "black",size = 0.1) +
   theme_void() + 
   coord_quickmap() +
-  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  ggtitle(paste("Event locations across", country))+
+  labs(caption = "Source: ticketmaster.com") +
   theme(title = element_text(size=8, face='bold'),
         plot.caption = element_text(face = "italic"))+
   geom_point(aes(x = longitude, y = latitude),
@@ -163,7 +168,7 @@ ggplot() +
 # get api response
 venue_res <- GET(url = 'https://app.ticketmaster.com/discovery/v2/venues?',
                  query = list(apikey = key,
-                              countryCode = "LU",
+                              countryCode = code,
                               locale = "*")) 
 status_code(venue_res)
 
@@ -209,7 +214,7 @@ if (n > 200){
   for (i in 1:(maxpage)) {
     res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                      query = list(apikey = key,
-                                  countryCode = "LU", 
+                                  countryCode = code, 
                                   locale = "*",
                                   # start at page 0 as current page number counted from 0
                                   page   = i-1,
@@ -242,7 +247,7 @@ if (n > 200){
   # Last Page
   res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                    query = list(apikey = key,
-                                countryCode = "LU", 
+                                countryCode = code, 
                                 locale = "*",
                                 # start at page 0 as current page number counted from 0
                                 page   = i,
@@ -271,7 +276,7 @@ if (n > 200){
   
   res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                    query = list(apikey = key,
-                                countryCode = "LU", 
+                                countryCode = code, 
                                 locale = "*",
                                 # start at page 0 as current page number counted from 0
                                 page   = 0,
@@ -311,19 +316,20 @@ plot_data[c("longitude", "latitude")] <- sapply(plot_data[c("longitude", "latitu
 
 # drop rows with coordinates outside the given range
 plot_data <-
-  subset(plot_data, latitude > 49.447778 & latitude < 50.182944)
+  subset(plot_data, latitude > coordinates[1,1] & latitude < coordinates[1,2])
 plot_data <-
-  subset(plot_data, longitude < 6.533333 & longitude > 5.733333)
+  subset(plot_data, longitude > coordinates[2,1] & longitude < coordinates[2,2])
 # plot venues in a map of Germany
 
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
-    data = map_data("world", region = "Luxembourg"),
+    data = map_data("world", region = country),
     fill = "#F9CCC3",color = "black",size = 0.1) +
   theme_void() + 
   coord_quickmap() +
-  labs(title = "Event locations across Luxembourg", caption = "Source: ticketmaster.com") +
+  ggtitle(paste("Event locations across", country))+
+  labs(caption = "Source: ticketmaster.com") +
   theme(title = element_text(size=8, face='bold'),
         plot.caption = element_text(face = "italic"))+
   geom_point(aes(x = longitude, y = latitude),
