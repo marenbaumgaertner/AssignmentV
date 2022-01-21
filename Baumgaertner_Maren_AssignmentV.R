@@ -165,6 +165,11 @@ ggplot() +
 #**************************LUXEMBOURG***********************************
 # Repeat Ex 2. to Ex. 5 for 
 
+# Set country specific information
+code <- "LU"
+country <- "Luxembourg"
+coordinates <- matrix(cbind(49.447778, 50.182944, 5.733333, 6.533333), byrow = TRUE, nrow = 2)
+
 # get api response
 venue_res <- GET(url = 'https://app.ticketmaster.com/discovery/v2/venues?',
                  query = list(apikey = key,
