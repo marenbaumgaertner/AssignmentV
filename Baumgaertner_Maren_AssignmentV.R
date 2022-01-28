@@ -11,7 +11,7 @@ if (!require("devtools"))install.packages("devtools")
 
 library(jsonlite);library(httr);library(rlist);library(tidyverse);library(naniar);library(devtools)
 
-# Ex 3
+# Exercise 3
 
 # set access to apikey
 source("apikey.R")
@@ -37,7 +37,7 @@ venue_df_p1 <- data.frame(fromJSON(venue_content, flatten = TRUE)[["_embedded"]]
   select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
 glimpse(venue_df_p1)
 
-# Ex 4
+# Exercise 4
 
 # get size of page, total number of elements and available pages in server from the json data
 venue_json <- fromJSON(venue_content, flatten = TRUE)
@@ -54,6 +54,7 @@ maxpage <- floor(n/size)
 remainder <- n-size*floor(n/size)
 print(remainder)
 
+# initiate a dataframe in the correct dimensions to speed up the loop
 venue_data <- data.frame(
   name  = character(n),
   city   = character(n),
@@ -64,8 +65,7 @@ venue_data <- data.frame(
   latitude = character(n),
   stringsAsFactors = FALSE)
 
-
-
+# loop over pages
 for (i in 1:(maxpage)) {
   res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                    query = list(apikey = key,
@@ -89,7 +89,6 @@ for (i in 1:(maxpage)) {
   venue_json$location.longitude[is.null(venue_json$location.longitude)] <- NA
   venue_json$location.latitude[is.null(venue_json$location.latitude)] <- NA
   
-  
   venue_data[(size * i - (size-1)):(size * i),] <- data.frame(venue_json) %>%
     #select colums
     select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
@@ -98,7 +97,6 @@ for (i in 1:(maxpage)) {
   Sys.sleep(0.5)
 }
 
-#i = maxpage + 1
 # Last Page
 res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                  query = list(apikey = key,
@@ -127,22 +125,21 @@ last_page <- data.frame(venue_json) %>%
   select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
 
 venue_data[(size * (i+1) - (size-1)):n,] <- last_page
-sum(duplicated(venue_data$name))
 
-# Ex. 5
 
-# Put coordinates into the correct class
+# Exercise 5
 plot_data <- venue_data
 
+# Put coordinates into the correct class
 sapply(plot_data, class)
 plot_data[c("longitude", "latitude")] <- sapply(plot_data[c("longitude", "latitude")],as.numeric)
-
 
 # drop rows with coordinates outside the given range
 plot_data <-
   subset(plot_data, latitude > coordinates[1,1] & latitude < coordinates[1,2])
 plot_data <-
   subset(plot_data, longitude > coordinates[2,1] & longitude < coordinates[2,2])
+
 # plot venues in a map of Germany
 ggplot() +
   geom_polygon(
@@ -162,6 +159,7 @@ ggplot() +
              size = 1,
              shape = 18)
 
+# Exercise 6
 #**************************LUXEMBOURG***********************************
 # Repeat Ex 2. to Ex. 5 for 
 
@@ -170,6 +168,7 @@ code <- "LU"
 country <- "Luxembourg"
 coordinates <- matrix(cbind(49.447778, 50.182944, 5.733333, 6.533333), byrow = TRUE, nrow = 2)
 
+# Repeat Exercise 3
 # get api response
 venue_res <- GET(url = 'https://app.ticketmaster.com/discovery/v2/venues?',
                  query = list(apikey = key,
@@ -186,9 +185,9 @@ venue_df_p1 <- data.frame(fromJSON(venue_content, flatten = TRUE)[["_embedded"]]
   select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
 tibble(venue_df_p1)
 
-# Ex 4
+# Repeat Exercise 4
 
-# get size of page, total number of elements and available pages in server from the json data
+# get size of page, total number of elements and available pages in server from the data
 venue_json <- fromJSON(venue_content, flatten = TRUE)
 
 n <- as.numeric(venue_json[["page"]][["totalElements"]])
@@ -213,7 +212,6 @@ if (n > 200){
   # Number of entries on the last incomplete page:
   remainder <- n-size*floor(n/size)
   print(remainder)
-  
   
   
   for (i in 1:(maxpage)) {
@@ -248,13 +246,11 @@ if (n > 200){
     Sys.sleep(0.5)
   }
   
-  #i = maxpage + 1
   # Last Page
   res_venue <- GET(url = "https://app.ticketmaster.com/discovery/v2/venues/?",
                    query = list(apikey = key,
                                 countryCode = code, 
                                 locale = "*",
-                                # start at page 0 as current page number counted from 0
                                 page   = i,
                                 size = remainder))
   
@@ -283,7 +279,6 @@ if (n > 200){
                    query = list(apikey = key,
                                 countryCode = code, 
                                 locale = "*",
-                                # start at page 0 as current page number counted from 0
                                 page   = 0,
                                 size = n))
   
@@ -301,16 +296,12 @@ if (n > 200){
   venue_json$location.longitude[is.null(venue_json$location.longitude)] <- NA
   venue_json$location.latitude[is.null(venue_json$location.latitude)] <- NA
   
-  
   venue_data[1:n,] <- data.frame(venue_json) %>%
     #select colums
     select("name", "city.name", "postalCode", "address.line1", "url", "location.longitude", "location.latitude")
 }
 
-
-#sum(duplicated(venue_data$names,))
-
-# Ex. 5
+# Repeat Exercise 5
 
 # Put coordinates into the correct class
 plot_data <- venue_data
@@ -324,8 +315,8 @@ plot_data <-
   subset(plot_data, latitude > coordinates[1,1] & latitude < coordinates[1,2])
 plot_data <-
   subset(plot_data, longitude > coordinates[2,1] & longitude < coordinates[2,2])
-# plot venues in a map of Germany
 
+# plot venues in a map of Luxembourg
 ggplot() +
   geom_polygon(
     aes(x = long, y = lat, group = group), 
